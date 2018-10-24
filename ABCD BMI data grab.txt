@@ -1,497 +1,500 @@
-#NOTES: 
-###PLEASE READ### 14 subjects had discrepant values for "gender" (which is actually sex) and "demo_sex_v2", even
-#though these are supposed to be the same values. I manually recoded these values to the correct ones based on input
-#from data management (Paul Shilling; pshilling@ucsd.edu). This will be fixed in ABCD release 1.1.
-#The values recoded from "gender" are 
-#NDAR_INVZGT6YAX7 from M to ""
-#NDAR_INVVGVFRTZC from F to M
-#NDAR_INVXTN3RGA3 from F to M
-#NDAR_INV9NAL2XKV from M to F
-#NDAR_INVRW8117A7 from F to M
-#NDAR_INVA8U01EHN from F to M
-#NDAR_INVNE8U2H3X from F to M
-#NDAR_INVPHZZNTJZ from F to M
-
-#All raw data files were opened, the 2nd row of headers were deleted, and they were saved as .csv files.
-#%BMIp95 was calculated utilizing following CDC instructions with SAS software (https://www.cdc.gov/nccdphp/dnpao/growthcharts/resources/sas.htm). 
-
-library(stringr)
-
-setwd("G:/")
-
-#BMIZ%95
-BMIZ95 <- read.csv("bmiz95.csv")
-
-#Screentime
-STQ <- read.csv("stq01.csv", header = TRUE)
-
-#Extract screentime variables
-myvars <- c("subjectkey",
-            "interview_age",
-            "screentime1_p_hours",
-            "screentime1_p_minutes",
-            "screentime2_p_hours",
-            "screentime2_p_minutes")
-
-STQ$interview_age <- as.numeric(STQ$interview_age)
-
-STQ <- STQ[myvars]
-
-#recode minutes to 0 so not treated as missing
-STQ$screentime1_p_minutes[is.na(STQ$screentime1_p_minutes)] <- 0
-STQ$screentime2_p_minutes[is.na(STQ$screentime2_p_minutes)] <- 0
-
-STQ$Screentime <- (STQ$screentime1_p_minutes + STQ$screentime1_p_hours*60)*5+((STQ$screentime2_p_minutes + STQ$screentime2_p_hours*60)*2)
-
-#drop screentime minutes
-STQ <- subset(STQ, select = -c(screentime1_p_minutes, screentime2_p_minutes))
-
-#CBCL
-CBCL <- read.csv("abcd_cbcls01.csv", header = TRUE)
-
-#Extract T scores subscales
-myvars <- c("subjectkey",
-            "cbcl_scr_syn_anxdep_t",
-            "cbcl_scr_syn_withdep_t",
-            "cbcl_scr_syn_somatic_t",
-            "cbcl_scr_syn_social_t",
-            "cbcl_scr_syn_thought_t",
-            "cbcl_scr_syn_attention_t",
-            "cbcl_scr_syn_rulebreak_t",
-            "cbcl_scr_syn_aggressive_t")
-
-CBCL <- CBCL[myvars]
-dim(CBCL)
-
-##
-UPPSP <- read.csv("abcd_upps01.csv", header = TRUE)
-
-#Extract item scores for subscales
-myvars <- c("subjectkey",
-            "upps6_y",
-            "upps7_y",
-            "upps11_y",
-            "upps12_y",
-            "upps15_y",
-            "upps16_y",
-            "upps17_y",
-            "upps18_y",
-            "upps19_y",
-            "upps20_y",
-            "upps21_y",
-            "upps22_y",
-            "upps23_y",
-            "upps24_y",
-            "upps27_y",
-            "upps28_y",
-            "upps35_y",
-            "upps36_y",
-            "upps37_y",
-            "upps39_y")
-
-UPPSP <- UPPSP[myvars]
-
-UPPSP$UPPSP_Premed <- rowSums(UPPSP[,c("upps6_y", "upps16_y", "upps23_y", "upps28_y")])
-UPPSP$UPPSP_NU <- rowSums(UPPSP[,c("upps7_y", "upps11_y", "upps17_y", "upps20_y")])
-UPPSP$UPPSP_SS <- rowSums(UPPSP[,c("upps12_y", "upps18_y", "upps21_y", "upps27_y")])
-UPPSP$UPPSP_Persev <- rowSums(UPPSP[,c("upps15_y", "upps19_y", "upps22_y", "upps24_y")])
-UPPSP$UPPSP_PU <- rowSums(UPPSP[,c("upps35_y", "upps36_y", "upps37_y", "upps39_y")])
-
-dim(UPPSP)
-
-##
-BISBAS <- read.csv("abcd_bisbas01.csv", header = TRUE)
-
-#Extract BISBAS items
-myvars <- c("subjectkey",
-            "bisbas1_y",
-            "bisbas2_y",
-            "bisbas3_y",
-            "bisbas4_y",
-            "bisbas5_y",
-            "bisbas6_y",
-            "bisbas7_y",
-            "bisbas8_y",
-            "bisbas10_y",
-            "bisbas9_y",
-            "bisbas11_y",
-            "bisbas12_y",
-            "bisbas13_y",
-            "bisbas14_y",
-            "bisbas15_y",
-            "bisbas16_y",
-            "bisbas17_y",
-            "bisbas18_y",
-            "bisbas19_y",
-            "bisbas20_y")
-
-BISBAS <- BISBAS[myvars]
-BISBAS$bisbas5_y_R[BISBAS$bisbas5_y==0] <- 3
-BISBAS$bisbas5_y_R[BISBAS$bisbas5_y==1] <- 2
-BISBAS$bisbas5_y_R[BISBAS$bisbas5_y==2] <- 1
-BISBAS$bisbas5_y_R[BISBAS$bisbas5_y==3] <- 0
-BISBAS$bisbas5_y_R[is.na(BISBAS$bisbas5_y)] <- NA
-BISBAS$BIS <- rowSums(BISBAS[,c("bisbas1_y", "bisbas2_y", "bisbas3_y", "bisbas4_y", "bisbas5_y_R", "bisbas6_y", "bisbas7_y")])
-BISBAS$BIS_RR <- rowSums(BISBAS[,c("bisbas8_y", "bisbas9_y", "bisbas10_y", "bisbas11_y", "bisbas12_y")])
-BISBAS$BIS_Dr <- rowSums(BISBAS[,c("bisbas13_y", "bisbas14_y", "bisbas15_y", "bisbas16_y")])
-BISBAS$BIS_FS <- rowSums(BISBAS[,c("bisbas17_y", "bisbas18_y", "bisbas19_y", "bisbas20_y")])
-
-dim(BISBAS)
-
-##
-DDT <- read.csv("cct01.csv", header = TRUE)
-
-#Extract DDT item
-myvars <- c("subjectkey",
-            "cash_choice_task")
-
-DDT <- DDT[myvars]
-dim(DDT)
-
-##
-WISCVMR <- read.csv("abcd_ps01.csv", header = TRUE)
-
-#WISCV Extract Matrix Reasoning Scaled Score
-myvars <- c("subjectkey",
-            "pea_wiscv_tss")
-
-WISCVMR <- WISCVMR[myvars]
-dim(WISCVMR)
-
-##
-NSCPa <- read.csv("abcd_pnsc01.csv", header = TRUE)
-
-#Neighborhood safety data
-myvars <- c("subjectkey",
-            "neighborhood1r_p",
-            "neighborhood2r_p",
-            "neighborhood3r_p")
-
-NSCPa <- NSCPa[myvars]
-NSCPa$NISPa_Tot <- rowSums(NSCPa[,c("neighborhood1r_p","neighborhood2r_p","neighborhood3r_p")])
-dim(NSCPa)
-
-##
-FESCh <- read.csv("abcd_fes01.csv", header = TRUE)
-
-#Family environment data
-myvars <- c("subjectkey",
-            "fes_youth_q1",
-            "fes_youth_q2",
-            "fes_youth_q3",
-            "fes_youth_q4",
-            "fes_youth_q5",
-            "fes_youth_q6",
-            "fes_youth_q7",
-            "fes_youth_q8",
-            "fes_youth_q9")
-
-FESCh <- FESCh[myvars]
-FESCh$FESCh_Tot <- rowSums(FESCh[,c("fes_youth_q1",
-                                    "fes_youth_q2",
-                                    "fes_youth_q3",
-                                    "fes_youth_q4",
-                                    "fes_youth_q5",
-                                    "fes_youth_q6",
-                                    "fes_youth_q7",
-                                    "fes_youth_q8",
-                                    "fes_youth_q9")])
-dim(FESCh)
-
-##
-FESPa <- read.csv("fes01.csv", header = TRUE)
-
-#Family environment data
-myvars <- c("subjectkey",
-            "fam_enviro1_p",
-            "fam_enviro2r_p",
-            "fam_enviro3_p",
-            "fam_enviro4r_p",
-            "fam_enviro5_p",
-            "fam_enviro6_p",
-            "fam_enviro7r_p",
-            "fam_enviro8_p",
-            "fam_enviro9r_p")
-
-FESPa <- FESPa[myvars]
-FESPa$FESPa_Tot <- rowSums(FESPa[,c("fam_enviro1_p",
-                                    "fam_enviro2r_p",
-                                    "fam_enviro3_p",
-                                    "fam_enviro4r_p",
-                                    "fam_enviro5_p",
-                                    "fam_enviro6_p",
-                                    "fam_enviro7r_p",
-                                    "fam_enviro8_p",
-                                    "fam_enviro9r_p")])
-dim(FESPa)
-
-##
-NIHTB <- read.csv("abcd_tbss01.csv", header = TRUE)
-
-#NIH toolbox
-myvars <- c("subjectkey",
-            "nihtbx_picvocab_agecorrected",
-            "nihtbx_flanker_agecorrected",
-            "nihtbx_list_agecorrected",
-            "nihtbx_pattern_agecorrected",
-            "nihtbx_fluidcomp_agecorrected",
-            "nihtbx_cryst_agecorrected")
-
-NIHTB <- NIHTB[myvars]
-dim(NIHTB)
-
-##
-#Demographics https://ndar.nih.gov/data_structure.html?short_name=pdem01
-#1 = Married Casado(a) ; 2 = Widowed Viudo(a) ; 3 = Divorced Divorciado(a) ; 4 = Separated Separado(a) ; 5 = Never married Nunca me he casado ; 6 = Living with partner
-#1 = Husband or wife Esposo(a); 3 = Biological son or daughter Hijo(a) biológico(a); 10 = Unmarried partner Pareja en unión libre; 11 = Father or mother Padre o madre 
-DEMO <- read.csv("pdem01_fixed.csv", header = TRUE)
-
-##SES, race, ethnicity and other demo factors
-myvars <- c("subjectkey",
-            "gender",
-            "demo_race_a_p___10",
-            "demo_race_a_p___11",
-            "demo_race_a_p___12",
-            "demo_race_a_p___13",
-            "demo_race_a_p___14",
-            "demo_race_a_p___15",
-            "demo_race_a_p___16",
-            "demo_race_a_p___17",
-            "demo_race_a_p___18",
-            "demo_race_a_p___19",
-            "demo_race_a_p___20",
-            "demo_race_a_p___21",
-            "demo_race_a_p___22",
-            "demo_race_a_p___23",
-            "demo_race_a_p___24",
-            "demo_race_a_p___25",
-            "demo_race_a_p___77",
-            "demo_race_a_p___99",
-            "demo_ethn_v2",
-            "demo_prnt_marital_v2",
-            "demo_prnt_ed_v2",
-            "demo_comb_income_v2",
-            "demo_prnt_prtnr_v2")
-
-DEMO <- DEMO[myvars]
-
-DEMO$demo_prnt_marital_v2[DEMO$demo_prnt_marital_v2==3] <- 2
-DEMO$demo_prnt_marital_v2[DEMO$demo_prnt_marital_v2==4] <- 2
-DEMO$demo_prnt_marital_v2[DEMO$demo_prnt_marital_v2==5] <- 2
-DEMO$demo_prnt_marital_v2[DEMO$demo_prnt_marital_v2==6] <- 2
-DEMO$demo_prnt_marital_v2[DEMO$demo_prnt_marital_v2>776] <- NA
-DEMO$demo_ethn_v2[DEMO$demo_ethn_v2>776] <- NA
-DEMO$demo_prnt_ed_v2[DEMO$demo_prnt_ed_v2>776] <- NA
-DEMO$demo_comb_income_v2[DEMO$demo_comb_income_v2>776] <- NA
-DEMO$demo_prnt_prtnr_v2[DEMO$demo_prnt_prtnr_v2>776] <- NA
-
-DEMO$Sex[DEMO$gender=="M"] <- 0
-DEMO$Sex[DEMO$gender=="F"] <- 1
-
-#drop gender
-DEMO <- subset(DEMO, select = -c(gender))
-
-dim(DEMO)
-
-###COLLAPSE SOME RACE CATEGORIES####
-DEMO$Pacific_Islander <- ifelse(rowSums(DEMO[,c(6:9)])>0,1,0)
-DEMO$Asian_Ancestry <- ifelse(rowSums(DEMO[,c(10:16)])>0,1,0)
-
-colnames(DEMO)[c(2:5,17:19)] <- c("White","Black","AmericanIndian", "AlaskaNative", "Other", "Refuse_to_answer", "Dont_know")
-DEMO <- subset(DEMO, select = -c(6:16))
-DEMO <- DEMO[,c(1,14,2:5,15:16,6:13)]
-DEMO$Missing <- ifelse(rowSums(DEMO[,c(3:11)])>0,0,1)
-DEMO$Missing <- ifelse(rowSums(DEMO[,c(10:11,17)])>0,1,0)
-
-##Remove all participants that are missing, did not know, or refused to answer race
-#DEMO <- DEMO[which(DEMO$Missing < 1),]
-#DEMO = DEMO[,!grepl("Missing",names(DEMO))]
-
-DEMO$Other<-ifelse(rowSums(DEMO[,c(3:8, 10:11)])>1, 2, DEMO$Other)
-data.sub<-DEMO[, 3:11]
-data.sub$Other<-ifelse(DEMO$Other==1, 2, DEMO$Other) #making "Other" larger than 1
-DEMO$Race<-names(data.sub)[apply(data.sub,1,which.max)] 
-table(DEMO$Race)
-DEMO$White_Binary<-ifelse(DEMO$Race=="White",0, 1)
-DEMO$Black_Binary<-ifelse(DEMO$Race=="Black",0, 1)
-
-##EXTRACT STIMULANT MEDICATIONS
-STIMULANTS <- read.csv("medsy01.csv", header = TRUE)
-myvars <- c("subjectkey",
-            "med1_rxnorm_p",
-            "med2_rxnorm_p",
-            "med3_rxnorm_p",
-            "med4_rxnorm_p",
-            "med5_rxnorm_p",
-            "med6_rxnorm_p",
-            "med7_rxnorm_p",
-            "med8_rxnorm_p",
-            "med9_rxnorm_p",
-            "med10_rxnorm_p",
-            "med11_rxnorm_p",
-            "med12_rxnorm_p")
-
-STIMULANTS <- STIMULANTS[myvars]
-
-STIMULANTS$StimMedication <- str_count(STIMULANTS$med1_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') + 
-  str_count(STIMULANTS$med2_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
-  str_count(STIMULANTS$med3_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
-  str_count(STIMULANTS$med4_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
-  str_count(STIMULANTS$med5_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
-  str_count(STIMULANTS$med6_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
-  str_count(STIMULANTS$med7_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
-  str_count(STIMULANTS$med8_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
-  str_count(STIMULANTS$med9_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
-  str_count(STIMULANTS$med10_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
-  str_count(STIMULANTS$med11_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
-  str_count(STIMULANTS$med12_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') 
-
-STIMULANTS$StimMedication[STIMULANTS$StimMedication>0] <- 1
-
-table(STIMULANTS$StimMedication)
-##
-SLEEP <- read.csv("abcd_sds01.csv", header = TRUE)
-
-#Extract sleep disturbance items
-myvars <- c("subjectkey",
-            "sleepdisturb1_p",
-            "sleepdisturb2_p",
-            "sleepdisturb3_p",
-            "sleepdisturb4_p",
-            "sleepdisturb5_p",
-            "sleepdisturb10_p",
-            "sleepdisturb11_p")
-
-SLEEP <- SLEEP[myvars]
-SLEEP$SLEEP_INIT <- rowSums(SLEEP[,c("sleepdisturb1_p",
-                                     "sleepdisturb2_p",
-                                     "sleepdisturb3_p",
-                                     "sleepdisturb4_p",
-                                     "sleepdisturb5_p",
-                                     "sleepdisturb10_p",
-                                     "sleepdisturb11_p")])
-dim(SLEEP)
-
-##
-YRBEXER <- read.csv("abcd_yrb01.csv", header = TRUE)
-
-#Extract sleep disturbance items
-myvars <- c("subjectkey",
-            "physical_activity1_y")
-
-YRBEXER <- YRBEXER[myvars]
-
-##
-FAMID <- read.csv("acspsw01.csv", header = TRUE)
-
-#Extract family ID
-myvars <- c("subjectkey",
-            "rel_family_id")
-
-FAMID <- FAMID[myvars]
-
-###########################
-# merge two data frames by dti fa all fibers
-myData <- merge(BMIZ95,STQ,by="subjectkey")
-myData <- merge(myData,CBCL,by="subjectkey")
-myData <- merge(myData,UPPSP,by="subjectkey")
-myData <- merge(myData,BISBAS,by="subjectkey")
-myData <- merge(myData,DDT,by="subjectkey")
-myData <- merge(myData,WISCVMR,by="subjectkey")
-myData <- merge(myData,NSCPa,by="subjectkey")
-myData <- merge(myData,FESCh,by="subjectkey")
-myData <- merge(myData,FESPa,by="subjectkey")
-myData <- merge(myData,NIHTB,by="subjectkey")
-myData <- merge(myData,DEMO,by="subjectkey")
-myData <- merge(myData,STIMULANTS,by="subjectkey")
-myData <- merge(myData,SLEEP,by="subjectkey")
-myData <- merge(myData,YRBEXER,by="subjectkey")
-myData <- merge(myData,FAMID,by="subjectkey")
-
-myData <- subset(myData, select = -c(subjectkey,Race,Black,White,AmericanIndian, AlaskaNative, Asian_Ancestry, Pacific_Islander, Other, Refuse_to_answer, Dont_know,sleepdisturb1_p,
-                                     sleepdisturb2_p,
-                                     sleepdisturb3_p,
-                                     sleepdisturb4_p,
-                                     sleepdisturb5_p,
-                                     sleepdisturb10_p,
-                                     sleepdisturb11_p,fam_enviro1_p,
-                                     fam_enviro2r_p,
-                                     fam_enviro3_p,
-                                     fam_enviro4r_p,
-                                     fam_enviro5_p,
-                                     fam_enviro6_p,
-                                     fam_enviro7r_p,
-                                     fam_enviro8_p,
-                                     fam_enviro9r_p,
-                                     fes_youth_q1,
-                                     fes_youth_q2,
-                                     fes_youth_q3,
-                                     fes_youth_q4,
-                                     fes_youth_q5,
-                                     fes_youth_q6,
-                                     fes_youth_q7,
-                                     fes_youth_q8,
-                                     fes_youth_q9,
-                                     neighborhood1r_p,
-                                     neighborhood2r_p,
-                                     neighborhood3r_p,
-                                     bisbas1_y,
-                                     bisbas2_y,
-                                     bisbas3_y,
-                                     bisbas4_y,
-                                     bisbas5_y,
-                                     bisbas5_y_R,
-                                     bisbas6_y,
-                                     bisbas7_y,
-                                     bisbas8_y,
-                                     bisbas10_y,
-                                     bisbas9_y,
-                                     bisbas11_y,
-                                     bisbas12_y,
-                                     bisbas13_y,
-                                     bisbas14_y,
-                                     bisbas15_y,
-                                     bisbas16_y,
-                                     bisbas17_y,
-                                     bisbas18_y,
-                                     bisbas19_y,
-                                     bisbas20_y,
-                                     upps6_y,
-                                     upps7_y,
-                                     upps11_y,
-                                     upps12_y,
-                                     upps15_y,
-                                     upps16_y,
-                                     upps17_y,
-                                     upps18_y,
-                                     upps19_y,
-                                     upps20_y,
-                                     upps21_y,
-                                     upps22_y,
-                                     upps23_y,
-                                     upps24_y,
-                                     upps27_y,
-                                     upps28_y,
-                                     upps35_y,
-                                     upps36_y,
-                                     upps37_y,
-                                     upps39_y,
-                                     med1_rxnorm_p,
-                                     med2_rxnorm_p,
-                                     med3_rxnorm_p,
-                                     med4_rxnorm_p,
-                                     med5_rxnorm_p,
-                                     med6_rxnorm_p,
-                                     med7_rxnorm_p,
-                                     med8_rxnorm_p,
-                                     med9_rxnorm_p,
-                                     med10_rxnorm_p,
-                                     med11_rxnorm_p,
-                                     med12_rxnorm_p))
-#Move sex to 3rd column
-myData <- myData[,c(1:2,34,3:33,35:46)]
-
-##Save data file
-write.csv(myData, file="ABCD_BMI_Dataset_FinalSubjectVar.csv")
-##END
-##############
+  #NOTES: 
+  ###PLEASE READ### 14 subjects had discrepant values for "gender" (which is actually sex) and "demo_sex_v2", even
+  #though these are supposed to be the same values. I manually recoded these values to the correct ones based on input
+  #from data management (Paul Shilling; pshilling@ucsd.edu). This will be fixed in ABCD release 1.1.
+  #The values recoded from "gender" are 
+  #NDAR_INVZGT6YAX7 from M to ""
+  #NDAR_INVVGVFRTZC from F to M
+  #NDAR_INVXTN3RGA3 from F to M
+  #NDAR_INV9NAL2XKV from M to F
+  #NDAR_INVRW8117A7 from F to M
+  #NDAR_INVA8U01EHN from F to M
+  #NDAR_INVNE8U2H3X from F to M
+  #NDAR_INVPHZZNTJZ from F to M
+  
+  #All raw data files were opened, the 2nd row of headers were deleted, and they were saved as .csv files.
+  #%BMIp95 was calculated utilizing following CDC instructions with SAS software (https://www.cdc.gov/nccdphp/dnpao/growthcharts/resources/sas.htm). 
+  
+  library(stringr)
+  
+  setwd("G:/")
+  
+  #BMIZ%95
+  BMIZ95 <- read.csv("bmiz95.csv")
+  
+  #Screentime
+  STQ <- read.csv("stq01.csv", header = TRUE)
+  
+  #Extract screentime variables
+  myvars <- c("subjectkey",
+              "interview_age",
+              "screentime1_p_hours",
+              "screentime1_p_minutes",
+              "screentime2_p_hours",
+              "screentime2_p_minutes")
+  
+  STQ$interview_age <- as.numeric(STQ$interview_age)
+  
+  STQ <- STQ[myvars]
+  
+  #recode minutes to 0 so not treated as missing
+  STQ$screentime1_p_minutes[is.na(STQ$screentime1_p_minutes)] <- 0
+  STQ$screentime2_p_minutes[is.na(STQ$screentime2_p_minutes)] <- 0
+  
+  STQ$Screentime <- (STQ$screentime1_p_minutes + STQ$screentime1_p_hours*60)*5+((STQ$screentime2_p_minutes + STQ$screentime2_p_hours*60)*2)
+  
+  #drop screentime minutes
+  STQ <- subset(STQ, select = -c(screentime1_p_minutes, screentime2_p_minutes))
+  
+  #CBCL
+  CBCL <- read.csv("abcd_cbcls01.csv", header = TRUE)
+  
+  #Extract T scores subscales
+  myvars <- c("subjectkey",
+              "cbcl_scr_syn_anxdep_t",
+              "cbcl_scr_syn_withdep_t",
+              "cbcl_scr_syn_somatic_t",
+              "cbcl_scr_syn_social_t",
+              "cbcl_scr_syn_thought_t",
+              "cbcl_scr_syn_attention_t",
+              "cbcl_scr_syn_rulebreak_t",
+              "cbcl_scr_syn_aggressive_t")
+  
+  CBCL <- CBCL[myvars]
+  dim(CBCL)
+  
+  ##
+  UPPSP <- read.csv("abcd_upps01.csv", header = TRUE)
+  
+  #Extract item scores for subscales
+  myvars <- c("subjectkey",
+              "upps6_y",
+              "upps7_y",
+              "upps11_y",
+              "upps12_y",
+              "upps15_y",
+              "upps16_y",
+              "upps17_y",
+              "upps18_y",
+              "upps19_y",
+              "upps20_y",
+              "upps21_y",
+              "upps22_y",
+              "upps23_y",
+              "upps24_y",
+              "upps27_y",
+              "upps28_y",
+              "upps35_y",
+              "upps36_y",
+              "upps37_y",
+              "upps39_y")
+  
+  UPPSP <- UPPSP[myvars]
+  
+  UPPSP$UPPSP_Premed <- rowSums(UPPSP[,c("upps6_y", "upps16_y", "upps23_y", "upps28_y")])
+  UPPSP$UPPSP_NU <- rowSums(UPPSP[,c("upps7_y", "upps11_y", "upps17_y", "upps20_y")])
+  UPPSP$UPPSP_SS <- rowSums(UPPSP[,c("upps12_y", "upps18_y", "upps21_y", "upps27_y")])
+  UPPSP$UPPSP_Persev <- rowSums(UPPSP[,c("upps15_y", "upps19_y", "upps22_y", "upps24_y")])
+  UPPSP$UPPSP_PU <- rowSums(UPPSP[,c("upps35_y", "upps36_y", "upps37_y", "upps39_y")])
+  
+  dim(UPPSP)
+  
+  ##
+  BISBAS <- read.csv("abcd_bisbas01.csv", header = TRUE)
+  
+  #Extract BISBAS items
+  myvars <- c("subjectkey",
+              "bisbas1_y",
+              "bisbas2_y",
+              "bisbas3_y",
+              "bisbas4_y",
+              "bisbas5_y",
+              "bisbas6_y",
+              "bisbas7_y",
+              "bisbas8_y",
+              "bisbas10_y",
+              "bisbas9_y",
+              "bisbas11_y",
+              "bisbas12_y",
+              "bisbas13_y",
+              "bisbas14_y",
+              "bisbas15_y",
+              "bisbas16_y",
+              "bisbas17_y",
+              "bisbas18_y",
+              "bisbas19_y",
+              "bisbas20_y")
+  
+  BISBAS <- BISBAS[myvars]
+  BISBAS$bisbas5_y_R[BISBAS$bisbas5_y==0] <- 3
+  BISBAS$bisbas5_y_R[BISBAS$bisbas5_y==1] <- 2
+  BISBAS$bisbas5_y_R[BISBAS$bisbas5_y==2] <- 1
+  BISBAS$bisbas5_y_R[BISBAS$bisbas5_y==3] <- 0
+  BISBAS$bisbas5_y_R[is.na(BISBAS$bisbas5_y)] <- NA
+  BISBAS$BIS <- rowSums(BISBAS[,c("bisbas1_y", "bisbas2_y", "bisbas3_y", "bisbas4_y", "bisbas5_y_R", "bisbas6_y", "bisbas7_y")])
+  BISBAS$BIS_RR <- rowSums(BISBAS[,c("bisbas8_y", "bisbas9_y", "bisbas10_y", "bisbas11_y", "bisbas12_y")])
+  BISBAS$BIS_Dr <- rowSums(BISBAS[,c("bisbas13_y", "bisbas14_y", "bisbas15_y", "bisbas16_y")])
+  BISBAS$BIS_FS <- rowSums(BISBAS[,c("bisbas17_y", "bisbas18_y", "bisbas19_y", "bisbas20_y")])
+  
+  dim(BISBAS)
+  
+  ##
+  DDT <- read.csv("cct01.csv", header = TRUE)
+  
+  #Extract DDT item
+  myvars <- c("subjectkey",
+              "cash_choice_task")
+  
+  DDT <- DDT[myvars]
+  dim(DDT)
+  
+  ##
+  WISCVMR <- read.csv("abcd_ps01.csv", header = TRUE)
+  
+  #WISCV Extract Matrix Reasoning Scaled Score
+  myvars <- c("subjectkey",
+              "pea_wiscv_tss")
+  
+  WISCVMR <- WISCVMR[myvars]
+  dim(WISCVMR)
+  
+  ##
+  NSCPa <- read.csv("abcd_pnsc01.csv", header = TRUE)
+  
+  #Neighborhood safety data
+  myvars <- c("subjectkey",
+              "neighborhood1r_p",
+              "neighborhood2r_p",
+              "neighborhood3r_p")
+  
+  NSCPa <- NSCPa[myvars]
+  NSCPa$NISPa_Tot <- rowSums(NSCPa[,c("neighborhood1r_p","neighborhood2r_p","neighborhood3r_p")])
+  dim(NSCPa)
+  
+  ##
+  FESCh <- read.csv("abcd_fes01.csv", header = TRUE)
+  
+  #Family environment data
+  myvars <- c("subjectkey",
+              "fes_youth_q1",
+              "fes_youth_q2",
+              "fes_youth_q3",
+              "fes_youth_q4",
+              "fes_youth_q5",
+              "fes_youth_q6",
+              "fes_youth_q7",
+              "fes_youth_q8",
+              "fes_youth_q9")
+  
+  FESCh <- FESCh[myvars]
+  FESCh$FESCh_Tot <- rowSums(FESCh[,c("fes_youth_q1",
+                                      "fes_youth_q2",
+                                      "fes_youth_q3",
+                                      "fes_youth_q4",
+                                      "fes_youth_q5",
+                                      "fes_youth_q6",
+                                      "fes_youth_q7",
+                                      "fes_youth_q8",
+                                      "fes_youth_q9")])
+  dim(FESCh)
+  
+  ##
+  FESPa <- read.csv("fes01.csv", header = TRUE)
+  
+  #Family environment data
+  myvars <- c("subjectkey",
+              "fam_enviro1_p",
+              "fam_enviro2r_p",
+              "fam_enviro3_p",
+              "fam_enviro4r_p",
+              "fam_enviro5_p",
+              "fam_enviro6_p",
+              "fam_enviro7r_p",
+              "fam_enviro8_p",
+              "fam_enviro9r_p")
+  
+  FESPa <- FESPa[myvars]
+  FESPa$FESPa_Tot <- rowSums(FESPa[,c("fam_enviro1_p",
+                                      "fam_enviro2r_p",
+                                      "fam_enviro3_p",
+                                      "fam_enviro4r_p",
+                                      "fam_enviro5_p",
+                                      "fam_enviro6_p",
+                                      "fam_enviro7r_p",
+                                      "fam_enviro8_p",
+                                      "fam_enviro9r_p")])
+  dim(FESPa)
+  
+  ##
+  NIHTB <- read.csv("abcd_tbss01.csv", header = TRUE)
+  
+  #NIH toolbox
+  myvars <- c("subjectkey",
+              "nihtbx_picvocab_agecorrected",
+              "nihtbx_flanker_agecorrected",
+              "nihtbx_list_agecorrected",
+              "nihtbx_pattern_agecorrected",
+              "nihtbx_picture_agecorrected",
+              "nihtbx_reading_agecorrected",
+              "nihtbx_cardsort_agecorrected",
+              "nihtbx_fluidcomp_agecorrected",
+              "nihtbx_cryst_agecorrected")
+  
+  NIHTB <- NIHTB[myvars]
+  dim(NIHTB)
+  
+  ##
+  #Demographics https://ndar.nih.gov/data_structure.html?short_name=pdem01
+  #1 = Married Casado(a) ; 2 = Widowed Viudo(a) ; 3 = Divorced Divorciado(a) ; 4 = Separated Separado(a) ; 5 = Never married Nunca me he casado ; 6 = Living with partner
+  #1 = Husband or wife Esposo(a); 3 = Biological son or daughter Hijo(a) biolÃ³gico(a); 10 = Unmarried partner Pareja en uniÃ³n libre; 11 = Father or mother Padre o madre 
+  DEMO <- read.csv("pdem01_fixed.csv", header = TRUE)
+  
+  ##SES, race, ethnicity and other demo factors
+  myvars <- c("subjectkey",
+              "gender",
+              "demo_race_a_p___10",
+              "demo_race_a_p___11",
+              "demo_race_a_p___12",
+              "demo_race_a_p___13",
+              "demo_race_a_p___14",
+              "demo_race_a_p___15",
+              "demo_race_a_p___16",
+              "demo_race_a_p___17",
+              "demo_race_a_p___18",
+              "demo_race_a_p___19",
+              "demo_race_a_p___20",
+              "demo_race_a_p___21",
+              "demo_race_a_p___22",
+              "demo_race_a_p___23",
+              "demo_race_a_p___24",
+              "demo_race_a_p___25",
+              "demo_race_a_p___77",
+              "demo_race_a_p___99",
+              "demo_ethn_v2",
+              "demo_prnt_marital_v2",
+              "demo_prnt_ed_v2",
+              "demo_comb_income_v2",
+              "demo_prnt_prtnr_v2")
+  
+  DEMO <- DEMO[myvars]
+  
+  DEMO$demo_prnt_marital_v2[DEMO$demo_prnt_marital_v2==3] <- 2
+  DEMO$demo_prnt_marital_v2[DEMO$demo_prnt_marital_v2==4] <- 2
+  DEMO$demo_prnt_marital_v2[DEMO$demo_prnt_marital_v2==5] <- 2
+  DEMO$demo_prnt_marital_v2[DEMO$demo_prnt_marital_v2==6] <- 2
+  DEMO$demo_prnt_marital_v2[DEMO$demo_prnt_marital_v2>776] <- NA
+  DEMO$demo_ethn_v2[DEMO$demo_ethn_v2>776] <- NA
+  DEMO$demo_prnt_ed_v2[DEMO$demo_prnt_ed_v2>776] <- NA
+  DEMO$demo_comb_income_v2[DEMO$demo_comb_income_v2>776] <- NA
+  DEMO$demo_prnt_prtnr_v2[DEMO$demo_prnt_prtnr_v2>776] <- NA
+  
+  DEMO$Sex[DEMO$gender=="M"] <- 0
+  DEMO$Sex[DEMO$gender=="F"] <- 1
+  
+  #drop gender
+  DEMO <- subset(DEMO, select = -c(gender))
+  
+  dim(DEMO)
+  
+  ###COLLAPSE SOME RACE CATEGORIES####
+  DEMO$Pacific_Islander <- ifelse(rowSums(DEMO[,c(6:9)])>0,1,0)
+  DEMO$Asian_Ancestry <- ifelse(rowSums(DEMO[,c(10:16)])>0,1,0)
+  
+  colnames(DEMO)[c(2:5,17:19)] <- c("White","Black","AmericanIndian", "AlaskaNative", "Other", "Refuse_to_answer", "Dont_know")
+  DEMO <- subset(DEMO, select = -c(6:16))
+  DEMO <- DEMO[,c(1,14,2:5,15:16,6:13)]
+  DEMO$Missing <- ifelse(rowSums(DEMO[,c(3:11)])>0,0,1)
+  DEMO$Missing <- ifelse(rowSums(DEMO[,c(10:11,17)])>0,1,0)
+  
+  ##Remove all participants that are missing, did not know, or refused to answer race
+  #DEMO <- DEMO[which(DEMO$Missing < 1),]
+  #DEMO = DEMO[,!grepl("Missing",names(DEMO))]
+  
+  DEMO$Other<-ifelse(rowSums(DEMO[,c(3:8, 10:11)])>1, 2, DEMO$Other)
+  data.sub<-DEMO[, 3:11]
+  data.sub$Other<-ifelse(DEMO$Other==1, 2, DEMO$Other) #making "Other" larger than 1
+  DEMO$Race<-names(data.sub)[apply(data.sub,1,which.max)] 
+  table(DEMO$Race)
+  DEMO$White_Binary<-ifelse(DEMO$Race=="White",0, 1)
+  DEMO$Black_Binary<-ifelse(DEMO$Race=="Black",0, 1)
+  
+  ##EXTRACT STIMULANT MEDICATIONS
+  STIMULANTS <- read.csv("medsy01.csv", header = TRUE)
+  myvars <- c("subjectkey",
+              "med1_rxnorm_p",
+              "med2_rxnorm_p",
+              "med3_rxnorm_p",
+              "med4_rxnorm_p",
+              "med5_rxnorm_p",
+              "med6_rxnorm_p",
+              "med7_rxnorm_p",
+              "med8_rxnorm_p",
+              "med9_rxnorm_p",
+              "med10_rxnorm_p",
+              "med11_rxnorm_p",
+              "med12_rxnorm_p")
+  
+  STIMULANTS <- STIMULANTS[myvars]
+  
+  STIMULANTS$StimMedication <- str_count(STIMULANTS$med1_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') + 
+    str_count(STIMULANTS$med2_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
+    str_count(STIMULANTS$med3_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
+    str_count(STIMULANTS$med4_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
+    str_count(STIMULANTS$med5_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
+    str_count(STIMULANTS$med6_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
+    str_count(STIMULANTS$med7_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
+    str_count(STIMULANTS$med8_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
+    str_count(STIMULANTS$med9_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
+    str_count(STIMULANTS$med10_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
+    str_count(STIMULANTS$med11_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') +
+    str_count(STIMULANTS$med12_rxnorm_p, 'Adderall|Methylphenidate|Dextroamphetamine|dexmethylphenidate|Vyvanse|Amphetamine|Concerta|Focalin|Quillivant|Ritalin|Metadate|Evekeo') 
+  
+  STIMULANTS$StimMedication[STIMULANTS$StimMedication>0] <- 1
+  
+  table(STIMULANTS$StimMedication)
+  ##
+  SLEEP <- read.csv("abcd_sds01.csv", header = TRUE)
+  
+  #Extract sleep disturbance items
+  myvars <- c("subjectkey",
+              "sleepdisturb1_p",
+              "sleepdisturb2_p",
+              "sleepdisturb3_p",
+              "sleepdisturb4_p",
+              "sleepdisturb5_p",
+              "sleepdisturb10_p",
+              "sleepdisturb11_p")
+  
+  SLEEP <- SLEEP[myvars]
+  SLEEP$SLEEP_INIT <- rowSums(SLEEP[,c("sleepdisturb1_p",
+                                       "sleepdisturb2_p",
+                                       "sleepdisturb3_p",
+                                       "sleepdisturb4_p",
+                                       "sleepdisturb5_p",
+                                       "sleepdisturb10_p",
+                                       "sleepdisturb11_p")])
+  dim(SLEEP)
+  
+  ##
+  YRBEXER <- read.csv("abcd_yrb01.csv", header = TRUE)
+  
+  #Extract sleep disturbance items
+  myvars <- c("subjectkey",
+              "physical_activity1_y")
+  
+  YRBEXER <- YRBEXER[myvars]
+  
+  ##
+  FAMID <- read.csv("acspsw01.csv", header = TRUE)
+  
+  #Extract family ID
+  myvars <- c("subjectkey",
+              "rel_family_id")
+  
+  FAMID <- FAMID[myvars]
+  
+  ###########################
+  # merge two data frames by dti fa all fibers
+  myData <- merge(BMIZ95,STQ,by="subjectkey")
+  myData <- merge(myData,CBCL,by="subjectkey")
+  myData <- merge(myData,UPPSP,by="subjectkey")
+  myData <- merge(myData,BISBAS,by="subjectkey")
+  myData <- merge(myData,DDT,by="subjectkey")
+  myData <- merge(myData,WISCVMR,by="subjectkey")
+  myData <- merge(myData,NSCPa,by="subjectkey")
+  myData <- merge(myData,FESCh,by="subjectkey")
+  myData <- merge(myData,FESPa,by="subjectkey")
+  myData <- merge(myData,NIHTB,by="subjectkey")
+  myData <- merge(myData,DEMO,by="subjectkey")
+  myData <- merge(myData,STIMULANTS,by="subjectkey")
+  myData <- merge(myData,SLEEP,by="subjectkey")
+  myData <- merge(myData,YRBEXER,by="subjectkey")
+  myData <- merge(myData,FAMID,by="subjectkey")
+  
+  myData <- subset(myData, select = -c(subjectkey,Race,Black,White,AmericanIndian, AlaskaNative, Asian_Ancestry, Pacific_Islander, Other, Refuse_to_answer, Dont_know,sleepdisturb1_p,
+                                       sleepdisturb2_p,
+                                       sleepdisturb3_p,
+                                       sleepdisturb4_p,
+                                       sleepdisturb5_p,
+                                       sleepdisturb10_p,
+                                       sleepdisturb11_p,fam_enviro1_p,
+                                       fam_enviro2r_p,
+                                       fam_enviro3_p,
+                                       fam_enviro4r_p,
+                                       fam_enviro5_p,
+                                       fam_enviro6_p,
+                                       fam_enviro7r_p,
+                                       fam_enviro8_p,
+                                       fam_enviro9r_p,
+                                       fes_youth_q1,
+                                       fes_youth_q2,
+                                       fes_youth_q3,
+                                       fes_youth_q4,
+                                       fes_youth_q5,
+                                       fes_youth_q6,
+                                       fes_youth_q7,
+                                       fes_youth_q8,
+                                       fes_youth_q9,
+                                       neighborhood1r_p,
+                                       neighborhood2r_p,
+                                       neighborhood3r_p,
+                                       bisbas1_y,
+                                       bisbas2_y,
+                                       bisbas3_y,
+                                       bisbas4_y,
+                                       bisbas5_y,
+                                       bisbas5_y_R,
+                                       bisbas6_y,
+                                       bisbas7_y,
+                                       bisbas8_y,
+                                       bisbas10_y,
+                                       bisbas9_y,
+                                       bisbas11_y,
+                                       bisbas12_y,
+                                       bisbas13_y,
+                                       bisbas14_y,
+                                       bisbas15_y,
+                                       bisbas16_y,
+                                       bisbas17_y,
+                                       bisbas18_y,
+                                       bisbas19_y,
+                                       bisbas20_y,
+                                       upps6_y,
+                                       upps7_y,
+                                       upps11_y,
+                                       upps12_y,
+                                       upps15_y,
+                                       upps16_y,
+                                       upps17_y,
+                                       upps18_y,
+                                       upps19_y,
+                                       upps20_y,
+                                       upps21_y,
+                                       upps22_y,
+                                       upps23_y,
+                                       upps24_y,
+                                       upps27_y,
+                                       upps28_y,
+                                       upps35_y,
+                                       upps36_y,
+                                       upps37_y,
+                                       upps39_y,
+                                       med1_rxnorm_p,
+                                       med2_rxnorm_p,
+                                       med3_rxnorm_p,
+                                       med4_rxnorm_p,
+                                       med5_rxnorm_p,
+                                       med6_rxnorm_p,
+                                       med7_rxnorm_p,
+                                       med8_rxnorm_p,
+                                       med9_rxnorm_p,
+                                       med10_rxnorm_p,
+                                       med11_rxnorm_p,
+                                       med12_rxnorm_p))
+  #Move sex to 3rd column
+  myData <- myData[,c(1:2,37,3:36,38:49)]
+  
+  ##Save data file
+  write.csv(myData, file="ABCD_BMI_Dataset_FinalSubjectVar.csv")
+  ##END
+  ##############
