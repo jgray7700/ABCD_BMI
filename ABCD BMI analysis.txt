@@ -121,7 +121,7 @@ myData$demo_ethn_v2 <- myData$demo_ethn_v2-1
 myData$cash_choice_task <- myData$cash_choice_task-1
 
 ###Standardize non-binary values prior to running regressions
-myData[c(-1,-3,-22,-33,-34,-37,-38,-39,-40,-43)] <- scale(myData[c(-1,-3,-22,-33,-34,-37,-38,-39,-40,-43)]) #standardize all except for column 1 and 2 (outcome and sex)
+myData[c(-1,-3,-22,-36,-37,-40,-41,-42,-43,-46)] <- scale(myData[c(-1,-3,-22,-36,-37,-40,-41,-42,-43,-46)]) #standardize all except for column 1 and 2 (outcome and sex)
 
 #Save dataset for AfAmer analyses
 myDataAfAmer <- myData
