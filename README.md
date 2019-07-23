@@ -1,1 +1,1 @@
-# R syntax for the processing and analysis of ABCD data related to manuscript under review (preprint available at https://psyarxiv.com/wncxh/)
+# R syntax for the processing and analysis of ABCD data related to manuscript "Demographic, psychological, behavioral, and cognitive correlates of BMI in youth: Findings from the Adolescent Brain Cognitive Development (ABCD) study" published in Psychological Medicine (https://doi.org/10.1017/S0033291719001545).
